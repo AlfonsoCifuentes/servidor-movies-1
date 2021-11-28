@@ -67,11 +67,11 @@ router.get("/genre/:genre", (req, res) => {
     })
 });
 
-//GET películas estrenadas a partir de 2010
+//GET películas estrenadas a partir de una fecha indicada
 
 router.get("/newerthan/:year", (req, res) => {
-    // const yearSolicitado = req.params.year;
-    return Movie.find({year: {$gt: 2010}})
+   const yearSolicitado = req.params.year;
+    return Movie.find({year: {$gt: yearSolicitado}})
     .then ((movies) => {
         return res.json(movies);
     })
