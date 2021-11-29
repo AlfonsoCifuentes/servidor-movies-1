@@ -5,7 +5,7 @@ const router = express.Router();
 
 //GET de todas las películas
 
-router.get ("/", (req, res) => {
+router.get ("/", (req, res, next) => {
     //Obteniendo todas las películas con Movie.find //
     Movie.find()
         //Mandando un response con las películas en JSON
@@ -14,13 +14,13 @@ router.get ("/", (req, res) => {
         })
         //Capturando el error en un catch si no funciona:
         .catch ((error) => {
-            console.error ("Error en GET / ", error);
-            return res.status(500).json("Ha ocurrido un error en el servidor");
+            const errorHappened = new Error();
+            return next(errorHappened);
         })
 });
 
 //GET película según su _id:
-router.get ("/:id", (req, res) => {
+router.get ("/:id", (req, res, next) => {
     //Requiriendo el parámetro id y almacenándolo en una variable
     const id = req.params.id;
     //Encontrando una película por id
@@ -28,58 +28,110 @@ router.get ("/:id", (req, res) => {
     //Mandando entonces la respuesta con la película solicitada en json
     .then (movie => {
         if (!movie ){
-            return res.status(404).json("No se ha encontrado la película");
+            const error = new Error (`La película con id: ${_id} no se ha encontrado`);
+            error.status = 404;
+            return next(error);
         }
         return res.json(movie)
     })
     //Capturando el error en un catch si no funciona:
     .catch (error => {
-        console.error (`Error en GET/${id}`, error);
-        return res.status(500).json("Ha habido un error en el servidor");
+            return next(new Error());
     })
 });
 
 //GET película por título
 
-router.get("/title/:title", (req, res) => {
+router.get("/title/:title", (req, res, next) => {
     const tituloSolicitado = req.params.title;
     return Movie.find({title: tituloSolicitado})
-    .then ((movies) => {
-        return res.json(movies);
+    .then ((movie) => {
+        if (movie == !tituloSolicitado ){
+            const error = new Error (`La película con título: ${tituloSolicitado} no se ha encontrado`);
+            error.status = 404;
+            return next(error);
+        }
+        return res.json(movie);
     })
     .catch ((error) => {
-        console.error (`Error en GET /title/${title}`, error);
-        return res.status(500).json("Ha habido un error en el servidor");
+        return next (new Error());
     })
 });
 
 //GET película por género
 
-router.get("/genre/:genre", (req, res) => {
+router.get("/genre/:genre", (req, res, next) => {
     const generoSolicitado = req.params.genre;
     return Movie.find({genre: generoSolicitado})
-    .then ((movies) => {
-        return res.json(movies);
+    .then ((movie) => {
+        if (movie == !generoSolicitado ){
+            const error = new Error (`No se ha encontrado ninguna película de género ${generoSolicitado} `);
+            error.status = 404;
+            return next(error);
+        }
+        return res.json(movie);
     })
     .catch ((error) => {
-        console.error (`Error en GET /genre/${genre}`, error);
-        return res.status(500).json("Ha habido un error en el servidor");
+        return next (new Error());
     })
 });
 
 //GET películas estrenadas a partir de una fecha indicada
 
-router.get("/newerthan/:year", (req, res) => {
+router.get("/newerthan/:year", (req, res, next) => {
    const yearSolicitado = req.params.year;
     return Movie.find({year: {$gt: yearSolicitado}})
     .then ((movies) => {
         return res.json(movies);
     })
     .catch ((error) => {
-        console.error (`Error en GET /year/${year}`, error);
-        return res.status(500).json("Ha habido un error en el servidor");
+        return next (new Error());
     })
 });
+
+//POST para crear una nueva película
+router.post("/", (req, res, next) => {
+    const newMovie = new Movie({
+        title: req.body.title,
+        director: req.body.director,
+        year: req.body.year,
+        genre:req.body.edad
+    });
+
+    newMovie.save()
+        .then (() => {
+            return res.status(201).json(newMovie);
+        })
+        .catch ((error) => {
+            next(error);
+        })
+})
+
+//PUT para modificar una película
+router.put ("/:id", (req, res, next) => {
+    const movieId = req.params.id;
+    const newMovie = new Movie(req.body);
+    newMovie._id = movieId;
+    Movie.findByIdAndUpdate(movieId, newMovie, { new: true})
+        .then(updatedMovie => {
+            res.status(200).json(updatedMovie);
+        })
+        .catch(error => {
+            next(error);
+        })
+});
+
+//DELETE para eliminar una película
+router.delete ("/:id", (req, res, next) => {
+    const movieId = req.params.id;
+    Movie.findByIdAndDelete(movieId)
+        .then (() => {
+            return res.status(200).json(`Se ha eliminado la película con id: ${movieId}`);
+        })
+        .catch (error => {
+            next(error);
+        })
+})
 
 //Exportando el módulo router
 
