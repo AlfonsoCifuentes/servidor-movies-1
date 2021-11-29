@@ -24,7 +24,7 @@ router.get ("/:id", (req, res, next) => {
     //Requiriendo el parámetro id y almacenándolo en una variable
     const id = req.params.id;
     //Encontrando un cine por id
-    Cinema.findById(id)
+    Cinema.findById(id).populate("movies")
     //Mandando entonces la respuesta con el cine solicitado en json
     .then (cinema => {
         if (!cinema ){
