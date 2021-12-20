@@ -98,7 +98,7 @@ router.put ("/:id", (req, res, next) => {
         });
 });
 
-//PUT para añadir una película al cine
+//PUT para añadir una película al cine - poner movieToAdd en el body de Postman
 router.put ("/:id/movies", (req, res, next) => {
     const cinemaId = req.params.id;
     const movieId = req.body.movieToAdd;
